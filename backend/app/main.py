@@ -3,14 +3,15 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse
 from contextlib import asynccontextmanager
-import os
+from pathlib import Path
 
 from app.database import engine, Base
 from app.routes import auth_router, users_router, companies_router, invoices_router
 
 # Get the base directory (project root)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
+# This file is at backend/app/main.py, so we go up 2 levels to reach project root
+BASE_DIR = Path(__file__).parent.parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
 
 
 @asynccontextmanager
@@ -29,10 +30,10 @@ app = FastAPI(
 )
 
 # Static files
-app.mount("/static", StaticFiles(directory=os.path.join(FRONTEND_DIR, "static")), name="static")
+app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR / "static")), name="static")
 
 # Templates
-templates = Jinja2Templates(directory=os.path.join(FRONTEND_DIR, "templates"))
+templates = Jinja2Templates(directory=str(FRONTEND_DIR / "templates"))
 
 # API Routes
 app.include_router(auth_router)

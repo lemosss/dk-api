@@ -326,7 +326,8 @@ async def upload_invoice_file(
     
     # Remover arquivo antigo se existir
     if invoice.file_url and invoice.file_url.startswith("/static/uploads/"):
-        old_file = os.path.join(os.path.dirname(__file__), invoice.file_url.lstrip("/").replace("app/", ""))
+        old_filename = os.path.basename(invoice.file_url)
+        old_file = os.path.join(UPLOAD_DIR, old_filename)
         if os.path.exists(old_file):
             try:
                 os.remove(old_file)
