@@ -37,7 +37,7 @@ Sistema completo de gestão de faturas com calendário, upload de boletos (PDF),
 	 ```
 3. **Instale as dependências:**
 	 ```bash
-	 pip install fastapi uvicorn sqlalchemy pydantic pydantic-settings python-jose[cryptography] passlib[bcrypt] python-multipart
+	 pip install -r requirements.txt
 	 ```
 4. **Rode o seed (opcional):**
 	 ```bash
@@ -116,6 +116,37 @@ dev.db                   # Banco de dados SQLite (desenvolvimento)
 ## Upload de Boleto (PDF)
 - Admins podem anexar PDF ao criar/editar fatura
 - Usuários e admins podem visualizar o PDF no calendário e na lista
+
+## Workflow de Desenvolvimento
+
+### Trabalhando com Backend
+
+Para fazer alterações no backend (API, modelos, autenticação):
+
+1. Navegue para o diretório `backend/`
+2. Edite os arquivos Python em `backend/app/`
+3. Os principais arquivos são:
+   - `main.py` - Aplicação FastAPI e rotas de páginas
+   - `routes.py` - Endpoints da API REST
+   - `models.py` - Modelos do banco de dados
+   - `auth.py` - Autenticação e JWT
+   - `schemas.py` - Validação de dados com Pydantic
+
+### Trabalhando com Frontend
+
+Para fazer alterações no frontend (HTML, CSS, JavaScript):
+
+1. Navegue para o diretório `frontend/`
+2. Templates HTML estão em `frontend/templates/`
+3. CSS e assets estão em `frontend/static/`
+4. O frontend usa Vue.js 3 via CDN (não requer build)
+
+### Importante
+
+- O servidor sempre deve ser executado a partir do diretório `backend/`
+- Os caminhos para templates e static files são relativos ao diretório raiz do projeto
+- O banco de dados (`dev.db`) fica na raiz do projeto
+- Uploads de PDFs são salvos em `frontend/static/uploads/`
 
 ## Observações
 - O sistema usa SQLite por padrão (`dev.db` na raiz do projeto). Para PostgreSQL, configure a variável `DATABASE_URL` no `.env`.
