@@ -80,6 +80,19 @@ def list_invoices(
     return invoices
 
 
+@invoices_router.get("/calendar")
+def get_calendar(
+    month: int,
+    year: int,
+    company_id: int = None,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    """Get calendar data for specific month"""
+    from app.report import services as report_services
+    return report_services.get_calendar_data(db, user, month, year, company_id)
+
+
 @invoices_router.get("/by-date")
 def get_invoices_by_date(
     date: str,

@@ -61,10 +61,10 @@ def get_calendar_data(db: Session, user: User, month: int, year: int, company_id
     
     invoices = query.all()
     
-    # Group by day
+    # Group by day - use string keys for JSON compatibility
     days = {}
     for inv in invoices:
-        day = inv.due_date.day
+        day = str(inv.due_date.day)  # Convert to string
         if day not in days:
             days[day] = {"total": 0, "paid": 0, "pending": 0, "amount": 0}
         days[day]["total"] += 1

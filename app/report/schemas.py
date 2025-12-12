@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Dict
+from typing import Dict, Any
 
 
 class DashboardStats(BaseModel):
@@ -16,4 +16,4 @@ class CalendarData(BaseModel):
     """Calendar data for a specific month"""
     month: int
     year: int
-    days: Dict[int, Dict[str, int | float]]
+    days: Dict[str, Any]  # Using str keys for JSON compatibility
