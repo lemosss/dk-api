@@ -1,23 +1,87 @@
 [tool.poetry]
 name = "dk-api"
 version = "0.1.0"
-description = ""
+description = "Sistema de gestão de faturas com calendário"
 authors = ["Tiago Lemos <tiagolemos@protonmail.com>"]
 readme = "README.md"
+packages = []
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = "^0.124.2"
-uvicorn = "^0.38.0"
-sqlalchemy = "^2.0.45"
-pydantic = {extras = ["email"], version = "^2.12.5"}
-pydantic-settings = "^2.12.0"
-python-jose = "^3.5.0"
-bcrypt = "^5.0.0"
-jinja2 = "^3.1.6"
-python-multipart = "^0.0.20"
+fastapi = "^0.115.0"
+uvicorn = {extras = ["standard"], version = "^0.32.0"}
+sqlalchemy = "^2.0.36"
+pydantic = {extras = ["email"], version = "^2.10.0"}
+pydantic-settings = "^2.6.0"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+bcrypt = "^4.2.0"
+jinja2 = "^3.1.4"
+python-multipart = "^0.0.17"
+aiosqlite = "^0.20.0"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-cov = "^6.0.0"
+pytest-asyncio = "^0.24.0"
+httpx = "^0.28.0"
+ruff = "^0.8.0"
+black = "^24.10.0"
+isort = "^5.13.0"
+mypy = "^1.13.0"
+
+[tool.poetry.scripts]
+dev = "uvicorn app.main:app --reload --host 127.0.0.1 --port 8000"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/tests/*",
+    "*/app/db/seed.py",
+    "*/__pycache__/*",
+    "*/conftest.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod"
+]
+show_missing = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
