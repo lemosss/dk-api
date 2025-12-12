@@ -26,7 +26,7 @@ Thumbs.db
 dev.db
 
 # Uploads
-app/static/uploads/
+frontend/static/uploads/
 
 # Env
 .env
