@@ -307,7 +307,15 @@ createApp({
         const wasPaid = invoice.is_paid;
         await api(`/api/invoices/${invoice.id}/toggle-paid`, { method: 'PATCH' });
         if (wasPaid) {
-          showToast('Fatura marcada como não paga', 'warning');
+          // Verifica se está vencida
+          const dueDate = new Date(invoice.due_date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (dueDate < today) {
+            showToast('Fatura marcada como não paga', 'error');
+          } else {
+            showToast('Fatura marcada como não paga', 'warning');
+          }
         } else {
           showToast('Fatura marcada como paga', 'success');
         }
