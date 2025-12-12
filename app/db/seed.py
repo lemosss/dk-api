@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from datetime import date, timedelta
 
 # Add project root to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__)
+))))
 
 from app.db.database import SessionLocal, engine
-from app.models import Base, User, Company, Invoice, RoleEnum
+from app.models import Base, User, Company, Invoice, RoleEnum, Plan, PlanEnum
 from app.core.security import get_password_hash
 
 
@@ -26,7 +28,52 @@ def seed_database():
             return
         
         print("Seeding database...")
-        
+
+        # Create plans
+        plan_starter = Plan(
+            name=PlanEnum.starter,
+            display_name="Starter",
+            price=0.00,
+            max_clients=1,
+            features=[
+                "1 cliente",
+                "Upload ilimitado de notas",
+                "Portal do cliente",
+                "Calendário básico"
+            ]
+        )
+        plan_profissional = Plan(
+            name=PlanEnum.profissional,
+            display_name="Profissional",
+            price=97.00,
+            max_clients=30,
+            features=[
+                "Até 30 clientes",
+                "Tudo do Starter",
+                "Alertas por email",
+                "Relatórios avançados",
+                "Suporte prioritário"
+            ]
+        )
+        plan_enterprise = Plan(
+            name=PlanEnum.enterprise,
+            display_name="Enterprise",
+            price=297.00,
+            max_clients=-1,  # Ilimitado
+            features=[
+                "Clientes ilimitados",
+                "Tudo do Profissional",
+                "API de integração",
+                "Gerente de conta dedicado",
+                "Treinamento da equipe"
+            ]
+        )
+        db.add_all([plan_starter, plan_profissional, plan_enterprise])
+        db.commit()
+        db.refresh(plan_starter)
+        db.refresh(plan_profissional)
+        db.refresh(plan_enterprise)
+
         # Create companies
         company1 = Company(
             company_key="acme",
@@ -35,7 +82,8 @@ def seed_database():
             email="contato@acme.com",
             phone="(11) 1234-5678",
             address="Av. Paulista, 1000 - São Paulo, SP",
-            primary_color="#3B82F6"
+            primary_color="#3B82F6",
+            plan_id=plan_profissional.id
         )
         company2 = Company(
             company_key="techstart",
@@ -44,7 +92,8 @@ def seed_database():
             email="contato@techstart.com",
             phone="(21) 9876-5432",
             address="Rua das Flores, 200 - Rio de Janeiro, RJ",
-            primary_color="#10B981"
+            primary_color="#10B981",
+            plan_id=plan_starter.id
         )
         db.add_all([company1, company2])
         db.commit()

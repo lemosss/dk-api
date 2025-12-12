@@ -8,6 +8,7 @@ from app.models.user import User, RoleEnum
 from app.core.tenant import get_current_tenant, require_tenant_admin
 from app.core.dependencies import get_current_user
 from app.core.security import get_password_hash
+from app.services.plan_service import PlanService
 
 router = APIRouter(tags=["tenant-users"])
 
@@ -56,10 +57,15 @@ def create_tenant_user(
 ):
     """
     Cria um novo usuário para a empresa.
-    
+
     - Admin só pode criar usuários com role 'user'
     - SuperAdmin pode criar qualquer role
+    - Valida limite de clientes do plano
     """
+    # Verifica limite de clientes do plano
+    plan_service = PlanService(db)
+    plan_service.validate_client_limit_or_raise(company.id)
+
     # Verifica se email já existe
     existing = db.query(User).filter(User.email == user_data.email).first()
     if existing:
@@ -67,14 +73,14 @@ def create_tenant_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email já cadastrado"
         )
-    
+
     # Admin só pode criar usuários com role 'user'
     if current_user.role == RoleEnum.admin and user_data.role != RoleEnum.user:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Você só pode criar usuários com perfil 'user'"
         )
-    
+
     user = User(
         email=user_data.email,
         hashed_password=get_password_hash(user_data.password),
@@ -83,11 +89,11 @@ def create_tenant_user(
         company_id=company.id,  # Força o company_id do tenant
         is_active=True
     )
-    
+
     db.add(user)
     db.commit()
     db.refresh(user)
-    
+
     return user
 
 
