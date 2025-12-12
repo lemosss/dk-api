@@ -4,8 +4,10 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse, HTMLResponse
 from contextlib import asynccontextmanager
 
-from app.database import engine, Base
-from app.routes import auth_router, users_router, companies_router, invoices_router
+from app.common.database import engine, Base
+from app.user.routes import auth_router, users_router
+from app.order.routes import companies_router, invoices_router
+from app.report.routes import report_router
 
 
 @asynccontextmanager
@@ -29,11 +31,12 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 # Templates
 templates = Jinja2Templates(directory="app/templates")
 
-# API Routes
+# API Routes - Modular architecture
 app.include_router(auth_router)
 app.include_router(users_router)
 app.include_router(companies_router)
 app.include_router(invoices_router)
+app.include_router(report_router)
 
 
 # ============ Page Routes ============

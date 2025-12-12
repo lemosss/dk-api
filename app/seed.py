@@ -1,10 +1,11 @@
 """
 Seed script to populate the database with initial data
 """
-from app.database import SessionLocal, engine, Base
-from app.models import User, Company, Invoice, RoleEnum
-from app.auth import hash_password
-from app.config import settings
+from app.common.database import SessionLocal, engine, Base
+from app.user.models import User, RoleEnum
+from app.order.models import Company, Invoice
+from app.user.auth import hash_password
+from app.common.config import settings
 from datetime import date, timedelta
 import random
 
