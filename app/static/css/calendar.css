@@ -137,6 +137,18 @@
   border-left: 3px solid var(--secondary);
 }
 
+.calendar-day.selected {
+  background: rgba(99, 102, 241, 0.2);
+  border: 2px solid var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+.calendar-day.selected .day-number {
+  background: var(--primary);
+  color: white;
+  font-weight: 700;
+}
+
 .day-number {
   font-size: 0.875rem;
   font-weight: 500;

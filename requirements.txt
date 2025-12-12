@@ -1,0 +1,17 @@
+# Dependências do projeto DK Invoice Calendar
+# Inclui o Poetry para permitir instalação via pip se desejado
+poetry>=1.5.0
+fastapi>=0.95.0
+uvicorn[standard]>=0.22.0
+SQLAlchemy>=2.0.18
+pydantic[email]>=2.1.0
+pydantic-settings>=0.1.0
+python-jose>=3.3.0
+bcrypt>=4.0.1
+Jinja2>=3.1.2
+python-multipart>=0.0.6
+
+# Observação: para instalar o Poetry é recomendado usar o instalador oficial
+# (https://python-poetry.org/docs/#installing-with-the-official-installer) ou
+# via pip (`pip install poetry`). Este arquivo permite também instalar via
+# `pip install -r requirements.txt` em ambientes simples.

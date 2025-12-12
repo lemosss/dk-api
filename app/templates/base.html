@@ -26,7 +26,12 @@
     };
     
     window.formatDate = (date) => {
-      return new Date(date).toLocaleDateString('pt-BR');
+      // Adiciona T12:00:00 para evitar problemas de fuso horário
+      // quando a data vem apenas como "YYYY-MM-DD"
+      const dateStr = typeof date === 'string' && date.length === 10 
+        ? date + 'T12:00:00' 
+        : date;
+      return new Date(dateStr).toLocaleDateString('pt-BR');
     };
     
     // API helper
