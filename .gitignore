@@ -39,3 +39,8 @@ app/static/uploads/
 *.bak
 *.swp
 *.tmp
+
+# Coverage
+.coverage
+htmlcov/
+.pytest_cache/
