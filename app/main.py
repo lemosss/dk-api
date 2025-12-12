@@ -1,72 +1,59 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import RedirectResponse, HTMLResponse
 from contextlib import asynccontextmanager
+import os
 
-from app.database import engine, Base
-from app.routes import auth_router, users_router, companies_router, invoices_router
+from app.core.config import settings
+from app.db.database import engine
+from app.models import Base
+from app.api.v1.router import api_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup: Create database tables
     Base.metadata.create_all(bind=engine)
     yield
-    # Shutdown
+    # Shutdown: Cleanup if needed
 
 
 app = FastAPI(
-    title="DK Invoice Calendar",
-    description="Sistema de gestão de faturas com calendário",
+    title=settings.APP_NAME,
+    description="Sistema de gestão de faturas com calendário - API REST",
     version="2.0.0",
     lifespan=lifespan
 )
 
-# Static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Templates
-templates = Jinja2Templates(directory="app/templates")
+# Mount uploads directory as static files
+uploads_dir = os.path.join(os.path.dirname(__file__), "..", "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
-# API Routes
-app.include_router(auth_router)
-app.include_router(users_router)
-app.include_router(companies_router)
-app.include_router(invoices_router)
-
-
-# ============ Page Routes ============
-@app.get("/", response_class=HTMLResponse)
-async def root():
-    return RedirectResponse(url="/login")
-
-
-@app.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
-    return templates.TemplateResponse("login.html", {"request": request})
+# Include API router
+app.include_router(api_router, prefix="/api/v1")
 
 
-@app.get("/dashboard", response_class=HTMLResponse)
-async def dashboard_page(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+@app.get("/")
+def root():
+    """Root endpoint"""
+    return {
+        "message": "DK Invoice Calendar API",
+        "version": "2.0.0",
+        "docs": "/docs"
+    }
 
 
-@app.get("/calendar", response_class=HTMLResponse)
-async def calendar_page(request: Request):
-    return templates.TemplateResponse("calendar.html", {"request": request})
-
-
-@app.get("/invoices", response_class=HTMLResponse)
-async def invoices_page(request: Request):
-    return templates.TemplateResponse("invoices.html", {"request": request})
-
-
-@app.get("/companies", response_class=HTMLResponse)
-async def companies_page(request: Request):
-    return templates.TemplateResponse("companies.html", {"request": request})
-
-
-@app.get("/users", response_class=HTMLResponse)
-async def users_page(request: Request):
-    return templates.TemplateResponse("users.html", {"request": request})
+@app.get("/health")
+def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy"}

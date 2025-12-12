@@ -9,33 +9,35 @@ __pycache__/
 *.egg
 *.log
 
-# Virtualenv
+# Virtual environments
 .venv/
 venv/
 ENV/
+env/
 
-# VSCode
+# Testing
+.coverage
+.pytest_cache/
+htmlcov/
+test.db
+*.db
+
+# IDEs
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Database
-*.sqlite3
-dev.db
-
-# Uploads
-app/static/uploads/
-
-# Env
+# Environment
 .env
 .env.*
+!.env.example
 
-# Jupyter
-*.ipynb_checkpoints/
-
-# Others
-*.bak
-*.swp
-*.tmp
+# Uploads
+uploads/*
+!uploads/.gitkeep
