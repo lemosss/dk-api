@@ -16,7 +16,8 @@ from app.schemas import (
 from app.auth import hash_password, verify_password, create_access_token, decode_access_token
 
 # Upload directory
-UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "static", "uploads")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+UPLOAD_DIR = os.path.join(BASE_DIR, "frontend", "static", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # OAuth2 scheme
