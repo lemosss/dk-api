@@ -1,0 +1,358 @@
+{% extends "base.html" %}
+
+{% block title %}Calendário - DK Invoice Calendar{% endblock %}
+
+{% block body %}
+<div id="app">
+  {% include "components/sidebar.html" %}
+  
+  <main class="main-content">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Calendário de Faturas</h1>
+        <p class="page-subtitle">Visualize e gerencie suas faturas por data</p>
+      </div>
+      <div class="flex gap-sm" v-if="user && user.role !== 'user'">
+        <select class="filter-select" v-model="selectedCompany" @change="loadCalendar">
+          <option :value="null">Todas as empresas</option>
+          <option v-for="company in companies" :key="company.id" :value="company.id">
+            [[ company.name ]]
+          </option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="calendar-layout">
+      <!-- Calendar -->
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <div class="calendar-nav">
+            <button class="calendar-nav-btn" @click="prevMonth">
+              <i data-lucide="chevron-left" style="width: 20px; height: 20px;"></i>
+            </button>
+            <div class="calendar-month-year">[[ monthYearLabel ]]</div>
+            <button class="calendar-nav-btn" @click="nextMonth">
+              <i data-lucide="chevron-right" style="width: 20px; height: 20px;"></i>
+            </button>
+          </div>
+          <button class="btn btn-secondary btn-sm" @click="goToToday">Hoje</button>
+        </div>
+        
+        <div class="calendar-grid">
+          <div class="calendar-weekdays">
+            <div class="calendar-weekday">Dom</div>
+            <div class="calendar-weekday">Seg</div>
+            <div class="calendar-weekday">Ter</div>
+            <div class="calendar-weekday">Qua</div>
+            <div class="calendar-weekday">Qui</div>
+            <div class="calendar-weekday">Sex</div>
+            <div class="calendar-weekday">Sáb</div>
+          </div>
+          
+          <div class="calendar-days">
+            <div 
+              v-for="(day, index) in calendarDays" 
+              :key="index"
+              class="calendar-day"
+              :class="getDayClass(day)"
+              @click="selectDay(day)"
+            >
+              <template v-if="day.day">
+                <span class="day-number">[[ day.day ]]</span>
+                <div class="day-info" v-if="day.info">
+                  <span class="day-count pending" v-if="day.info.pending">[[ day.info.pending ]] pend.</span>
+                  <span class="day-count paid" v-if="day.info.paid">[[ day.info.paid ]] pago</span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sidebar with invoices -->
+      <div class="calendar-sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <template v-if="selectedDate">
+              Faturas do dia
+            </template>
+            <template v-else>
+              Selecione um dia
+            </template>
+          </div>
+          <div class="sidebar-date" v-if="selectedDate">
+            [[ formatSelectedDate ]]
+          </div>
+        </div>
+        
+        <div v-if="!selectedDate" class="empty-state">
+          <i data-lucide="mouse-pointer-click" class="empty-state-icon"></i>
+          <div class="empty-state-title">Clique em um dia</div>
+          <p>Selecione um dia no calendário para ver as faturas</p>
+        </div>
+        
+        <div v-else-if="dayInvoices.length === 0" class="empty-state">
+          <i data-lucide="inbox" class="empty-state-icon"></i>
+          <div class="empty-state-title">Nenhuma fatura</div>
+          <p>Não há faturas para este dia</p>
+        </div>
+        
+        <div v-else class="invoice-list">
+          <div 
+            v-for="invoice in dayInvoices" 
+            :key="invoice.id" 
+            class="invoice-item"
+          >
+            <div class="invoice-status" :class="getInvoiceStatusClass(invoice)"></div>
+            <div class="invoice-details">
+              <div class="invoice-description">[[ invoice.description ]]</div>
+              <div class="invoice-company">[[ invoice.company_name ]]</div>
+            </div>
+            <div class="invoice-amount">[[ formatCurrency(invoice.amount) ]]</div>
+            <div class="invoice-actions">
+              <!-- Botão Ver PDF/Boleto -->
+              <a 
+                v-if="invoice.file_url" 
+                :href="invoice.file_url" 
+                target="_blank"
+                class="btn btn-icon btn-ghost"
+                title="Ver Boleto (PDF)"
+                style="color: var(--primary);"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><line x1="10" y1="9" x2="8" y2="9"></line></svg>
+              </a>
+              <span 
+                v-else 
+                class="btn btn-icon btn-ghost" 
+                title="Sem boleto anexado"
+                style="opacity: 0.3; cursor: default;"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+              </span>
+              <button 
+                class="btn btn-icon btn-ghost" 
+                :title="invoice.is_paid ? 'Marcar como não paga' : 'Marcar como paga'"
+                @click="togglePaid(invoice)"
+              >
+                <!-- X-Circle icon when paid -->
+                <svg v-if="invoice.is_paid" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="m15 9-6 6"></path><path d="m9 9 6 6"></path></svg>
+                <!-- Check-Circle icon when not paid -->
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"></path><path d="m9 11 3 3L22 4"></path></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const { createApp } = Vue;
+
+createApp({
+  delimiters: ['[[', ']]'],
+  data() {
+    return {
+      user: null,
+      currentPage: 'calendar',
+      sidebarOpen: false,
+      showUserMenu: false,
+      companies: [],
+      selectedCompany: null,
+      currentYear: new Date().getFullYear(),
+      currentMonth: new Date().getMonth(),
+      calendarData: {},
+      selectedDate: null,
+      dayInvoices: []
+    };
+  },
+  computed: {
+    monthYearLabel() {
+      const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      return `${months[this.currentMonth]} ${this.currentYear}`;
+    },
+    formatSelectedDate() {
+      if (!this.selectedDate) return '';
+      return new Date(this.selectedDate + 'T12:00:00').toLocaleDateString('pt-BR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+    },
+    calendarDays() {
+      const days = [];
+      const firstDay = new Date(this.currentYear, this.currentMonth, 1);
+      const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+      const startPadding = firstDay.getDay();
+      
+      // Padding for previous month
+      for (let i = 0; i < startPadding; i++) {
+        days.push({ day: null, empty: true });
+      }
+      
+      // Days of current month
+      for (let day = 1; day <= lastDay.getDate(); day++) {
+        const dateStr = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        days.push({
+          day,
+          date: dateStr,
+          info: this.calendarData[day] || null,
+          isToday: this.isToday(day)
+        });
+      }
+      
+      return days;
+    }
+  },
+  methods: {
+    formatCurrency(value) {
+      return window.formatCurrency(value);
+    },
+    isToday(day) {
+      const today = new Date();
+      return day === today.getDate() && 
+             this.currentMonth === today.getMonth() && 
+             this.currentYear === today.getFullYear();
+    },
+    getDayClass(day) {
+      const classes = [];
+      if (day.empty) classes.push('empty');
+      if (day.isToday) classes.push('today');
+      if (day.info) {
+        classes.push('has-invoices');
+        if (day.info.pending > 0) {
+          const dateObj = new Date(day.date);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (dateObj < today) {
+            classes.push('has-overdue');
+          } else {
+            classes.push('has-pending');
+          }
+        } else if (day.info.paid > 0) {
+          classes.push('all-paid');
+        }
+      }
+      if (day.date === this.selectedDate) classes.push('selected');
+      return classes;
+    },
+    getInvoiceStatusClass(invoice) {
+      if (invoice.is_paid) return 'paid';
+      const dueDate = new Date(invoice.due_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (dueDate < today) return 'overdue';
+      return 'pending';
+    },
+    prevMonth() {
+      if (this.currentMonth === 0) {
+        this.currentMonth = 11;
+        this.currentYear--;
+      } else {
+        this.currentMonth--;
+      }
+      this.loadCalendar();
+    },
+    nextMonth() {
+      if (this.currentMonth === 11) {
+        this.currentMonth = 0;
+        this.currentYear++;
+      } else {
+        this.currentMonth++;
+      }
+      this.loadCalendar();
+    },
+    goToToday() {
+      const today = new Date();
+      this.currentYear = today.getFullYear();
+      this.currentMonth = today.getMonth();
+      this.loadCalendar();
+    },
+    async selectDay(day) {
+      if (!day.day) return;
+      this.selectedDate = day.date;
+      await this.loadDayInvoices();
+    },
+    async loadCalendar() {
+      try {
+        let url = `/api/invoices/calendar?month=${this.currentMonth + 1}&year=${this.currentYear}`;
+        if (this.selectedCompany) {
+          url += `&company_id=${this.selectedCompany}`;
+        }
+        const data = await api(url);
+        this.calendarData = data.days || {};
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    async loadDayInvoices() {
+      if (!this.selectedDate) return;
+      try {
+        let url = `/api/invoices/by-date?date=${this.selectedDate}`;
+        if (this.selectedCompany) {
+          url += `&company_id=${this.selectedCompany}`;
+        }
+        this.dayInvoices = await api(url);
+        this.$nextTick(() => lucide.createIcons());
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    async togglePaid(invoice) {
+      try {
+        const wasPaid = invoice.is_paid;
+        await api(`/api/invoices/${invoice.id}/toggle-paid`, { method: 'PATCH' });
+        if (wasPaid) {
+          showToast('Fatura marcada como não paga', 'warning');
+        } else {
+          showToast('Fatura marcada como paga', 'success');
+        }
+        await this.loadCalendar();
+        await this.loadDayInvoices();
+        this.$nextTick(() => lucide.createIcons());
+      } catch (err) {
+        showToast(err.message, 'error');
+      }
+    },
+    async loadCompanies() {
+      try {
+        this.companies = await api('/api/companies');
+      } catch (err) {
+        console.error(err);
+      }
+    },
+    toggleUserMenu() {
+      this.showUserMenu = !this.showUserMenu;
+    },
+    logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    },
+    async loadUser() {
+      try {
+        this.user = await api('/api/auth/me');
+        if (this.user.role === 'user') {
+          this.selectedCompany = this.user.company_id;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  },
+  async mounted() {
+    if (!localStorage.getItem('token')) {
+      window.location.href = '/login';
+      return;
+    }
+    await this.loadUser();
+    await this.loadCompanies();
+    await this.loadCalendar();
+    this.$nextTick(() => lucide.createIcons());
+  }
+}).mount('#app');
+</script>
+{% endblock %}

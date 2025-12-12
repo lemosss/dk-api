@@ -1,0 +1,61 @@
+<!-- Sidebar Component -->
+<aside class="sidebar" :class="{ open: sidebarOpen }">
+  <div class="sidebar-header">
+    <a href="/dashboard" class="sidebar-logo">
+      <div class="sidebar-logo-icon">
+        <i data-lucide="calendar-check" style="width: 20px; height: 20px; color: white;"></i>
+      </div>
+      <span>DK Invoice</span>
+    </a>
+  </div>
+  
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-title">Menu</div>
+      <a href="/dashboard" class="nav-link" :class="{ active: currentPage === 'dashboard' }">
+        <i data-lucide="layout-dashboard" class="nav-link-icon"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="/calendar" class="nav-link" :class="{ active: currentPage === 'calendar' }">
+        <i data-lucide="calendar" class="nav-link-icon"></i>
+        <span>Calendário</span>
+      </a>
+      <a href="/invoices" class="nav-link" :class="{ active: currentPage === 'invoices' }">
+        <i data-lucide="file-text" class="nav-link-icon"></i>
+        <span>Faturas</span>
+      </a>
+    </div>
+    
+    <div class="nav-section" v-if="user && user.role !== 'user'">
+      <div class="nav-section-title">Administração</div>
+      <a href="/companies" class="nav-link" :class="{ active: currentPage === 'companies' }">
+        <i data-lucide="building-2" class="nav-link-icon"></i>
+        <span>Empresas</span>
+      </a>
+      <a href="/users" class="nav-link" :class="{ active: currentPage === 'users' }" v-if="user && user.role === 'superadmin'">
+        <i data-lucide="users" class="nav-link-icon"></i>
+        <span>Usuários</span>
+      </a>
+    </div>
+  </nav>
+  
+  <div class="sidebar-footer">
+    <div class="user-menu" @click="toggleUserMenu">
+      <div class="user-avatar">
+        [[ user ? user.email.charAt(0).toUpperCase() : 'U' ]]
+      </div>
+      <div class="user-info">
+        <div class="user-name">[[ user ? user.name || user.email : 'Carregando...' ]]</div>
+        <div class="user-role">[[ user ? user.role : '' ]]</div>
+      </div>
+      <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+    </div>
+    
+    <div class="user-dropdown" v-if="showUserMenu" style="margin-top: 8px;">
+      <button class="btn btn-ghost btn-sm" style="width: 100%; justify-content: flex-start;" @click="logout">
+        <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+        <span>Sair</span>
+      </button>
+    </div>
+  </div>
+</aside>
