@@ -28,6 +28,12 @@ class CompanyService:
             )
         return company
     
+    def get_company_by_key(self, company_key: str) -> Company | None:
+        """Get company by company_key"""
+        return self.db.query(Company).filter(
+            Company.company_key == company_key
+        ).first()
+    
     def create_company(self, company_data: CompanyCreate) -> Company:
         """Create a new company"""
         # Check if CNPJ already exists
@@ -35,6 +41,13 @@ class CompanyService:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="CNPJ já cadastrado"
+            )
+        
+        # Check if company_key already exists
+        if self.get_company_by_key(company_data.company_key):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Identificador (company_key) já está em uso"
             )
         
         company = Company(**company_data.model_dump())
@@ -53,8 +66,25 @@ class CompanyService:
                     detail="CNPJ já cadastrado"
                 )
         
+        # Check if company_key is being changed and already exists
+        if company_data.company_key and company_data.company_key != company.company_key:
+            existing = self.get_company_by_key(company_data.company_key)
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Identificador (company_key) já está em uso"
+                )
+        
         update_data = company_data.model_dump(exclude_unset=True)
         return self.company_repo.update(company, update_data)
+    
+    def update_logo(self, company_id: int, logo_url: str) -> Company:
+        """Update company logo"""
+        company = self.get_company_by_id(company_id)
+        company.logo_url = logo_url
+        self.db.commit()
+        self.db.refresh(company)
+        return company
     
     def delete_company(self, company_id: int) -> bool:
         """Delete a company"""

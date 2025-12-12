@@ -34,3 +34,10 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class UserOutWithCompany(UserOut):
+    """User com informações da empresa"""
+    company_key: Optional[str] = None
+    company_name: Optional[str] = None
+

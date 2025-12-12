@@ -1,5 +1,12 @@
+import os
+import sys
+
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
+
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 from app.db.database import SessionLocal, engine
 from app.models import Base, User, Company, Invoice, RoleEnum
 from app.core.security import get_password_hash
@@ -22,18 +29,22 @@ def seed_database():
         
         # Create companies
         company1 = Company(
+            company_key="acme",
             name="ACME Corporation",
             cnpj="12.345.678/0001-90",
             email="contato@acme.com",
             phone="(11) 1234-5678",
-            address="Av. Paulista, 1000 - São Paulo, SP"
+            address="Av. Paulista, 1000 - São Paulo, SP",
+            primary_color="#3B82F6"
         )
         company2 = Company(
+            company_key="techstart",
             name="TechStart Ltda",
             cnpj="98.765.432/0001-10",
             email="contato@techstart.com",
             phone="(21) 9876-5432",
-            address="Rua das Flores, 200 - Rio de Janeiro, RJ"
+            address="Rua das Flores, 200 - Rio de Janeiro, RJ",
+            primary_color="#10B981"
         )
         db.add_all([company1, company2])
         db.commit()
@@ -47,12 +58,22 @@ def seed_database():
             name="Super Admin",
             role=RoleEnum.superadmin,
             is_active=True
+            # superadmin não precisa de company_id
         )
-        admin = User(
-            email="admin@example.com",
+        admin_acme = User(
+            email="admin@acme.com",
             hashed_password=get_password_hash("admin123"),
-            name="Admin User",
+            name="Admin ACME",
             role=RoleEnum.admin,
+            company_id=company1.id,
+            is_active=True
+        )
+        admin_techstart = User(
+            email="admin@techstart.com",
+            hashed_password=get_password_hash("admin123"),
+            name="Admin TechStart",
+            role=RoleEnum.admin,
+            company_id=company2.id,
             is_active=True
         )
         user1 = User(
@@ -71,7 +92,7 @@ def seed_database():
             company_id=company2.id,
             is_active=True
         )
-        db.add_all([superadmin, admin, user1, user2])
+        db.add_all([superadmin, admin_acme, admin_techstart, user1, user2])
         db.commit()
         db.refresh(superadmin)
         
@@ -134,11 +155,30 @@ def seed_database():
         db.commit()
         
         print("Database seeded successfully!")
-        print("\nTest users:")
-        print("  Super Admin: super@example.com / super123")
-        print("  Admin: admin@example.com / admin123")
-        print("  ACME User: user@acme.com / user123")
-        print("  TechStart User: user@techstart.com / user123")
+        print("\n" + "="*60)
+        print("USUÁRIOS DE TESTE")
+        print("="*60)
+        print("\n🔑 Super Admin (acesso global):")
+        print("   Email: super@example.com")
+        print("   Senha: super123")
+        print("   Login: /api/v1/auth/login ou qualquer /{company_key}/auth/login")
+        print("\n🏢 Admin ACME Corporation:")
+        print("   Email: admin@acme.com")
+        print("   Senha: admin123")
+        print("   Login: /acme/auth/login")
+        print("\n🏢 Admin TechStart:")
+        print("   Email: admin@techstart.com")
+        print("   Senha: admin123")
+        print("   Login: /techstart/auth/login")
+        print("\n👤 Usuário ACME:")
+        print("   Email: user@acme.com")
+        print("   Senha: user123")
+        print("   Login: /acme/auth/login")
+        print("\n👤 Usuário TechStart:")
+        print("   Email: user@techstart.com")
+        print("   Senha: user123")
+        print("   Login: /techstart/auth/login")
+        print("\n" + "="*60)
         
     except Exception as e:
         print(f"Error seeding database: {e}")

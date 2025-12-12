@@ -25,7 +25,16 @@ def login(
     # Create token
     access_token = auth_service.create_token_for_user(user)
     
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Get company_key if user belongs to a company
+    company_key = None
+    if user.company_id and user.company:
+        company_key = user.company.company_key
+    
+    return {
+        "access_token": access_token, 
+        "token_type": "bearer",
+        "company_key": company_key
+    }
 
 
 @router.get("/me", response_model=UserOut)
